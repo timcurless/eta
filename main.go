@@ -11,6 +11,8 @@ import (
 	"github.com/namsral/flag"
 	"github.com/sirupsen/logrus"
 
+	"github.com/timcurless/eta/db"
+	"github.com/timcurless/eta/db/cockroachdb"
 	"github.com/timcurless/eta/vault"
 )
 
@@ -25,10 +27,12 @@ const serviceName = "eta"
 func init() {
 	flag.StringVar(&vaultURL, "vault-url", "https://localhost:8200", "URL (TLS) of Vault Server, including port")
 	flag.StringVar(&vaultToken, "vault-token", "", "Vault API Token")
-	flag.Parse()
+	db.Register("cockroachdb", &cockroachdb.Cockroach{})
 }
 
 func main() {
+	flag.Parse()
+
 	// Logging Domain
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 	logrus.Infof("Starting %v", serviceName)
@@ -38,6 +42,19 @@ func main() {
 	vc, err = vault.NewVaultClient(vaultURL, vaultToken)
 	if err != nil {
 		logrus.Panicf("Panic: %v", err)
+	}
+
+	dbconn := false
+	for !dbconn {
+		err := db.Init()
+		if err != nil {
+			if err == db.ErrNoDatabaseSelected {
+				logrus.Fatal(err)
+			}
+			logrus.Print(err)
+		} else {
+			dbconn = true
+		}
 	}
 
 	r := gin.Default()

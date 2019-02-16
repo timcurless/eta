@@ -1,0 +1,58 @@
+version: "3"
+
+services:
+  eta:
+    image: timcurless/eta
+    depends_on:
+      - cockroachdb1
+    networks:
+      - cockroachdb
+    ports:
+      - "3000:3000"
+    environment:
+      - USER_DATABASE=cockroachdb
+      - DB_HOST=cockroachdb1
+
+  cockroachdb1:
+    deploy:
+      replicas: 1
+    image: cockroachdb/cockroach:v2.1.4
+    stop_grace_period: 60s
+    networks:
+      - cockroachdb
+    ports:
+      - "8888:8080"
+    volumes:
+      - cockroachdb1:/cockroach/cockroach-data
+    command: "start --logtostderr --advertise-host=cockroachdb1 --insecure"
+
+  cockroachdb2:
+    deploy:
+      replicas: 1
+    image: cockroachdb/cockroach:v2.1.4
+    stop_grace_period: 60s
+    networks:
+      - cockroachdb
+    volumes:
+      - cockroachdb2:/cockroach/cockroach-data
+    command: "start --logtostderr --advertise-host=cockroachdb2 --join=cockroachdb1:26257 --insecure"
+
+  cockroachdb3:
+    deploy:
+      replicas: 1
+    image: cockroachdb/cockroach:v2.1.4
+    stop_grace_period: 60s
+    networks:
+      - cockroachdb
+    volumes:
+      - cockroachdb3:/cockroach/cockroach-data
+    command: "start --logtostderr --advertise-host=cockroachdb3 --join=cockroachdb1:26257 --insecure"
+
+networks:
+  cockroachdb:
+    external: true
+
+volumes:
+  cockroachdb1:
+  cockroachdb2:
+  cockroachdb3:
