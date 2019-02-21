@@ -1,6 +1,8 @@
 package vault
 
 import (
+	"strconv"
+
 	"github.com/hashicorp/vault/api"
 )
 
@@ -26,4 +28,15 @@ func (v *VaultClient) GetVaultHealth() (interface{}, error) {
 		return nil, err
 	}
 	return health, nil
+}
+
+func (v *VaultClient) GetDatabaseCreds() (string, string, string, error) {
+	s, err := v.client.Logical().Read("database/creds/eta")
+	if err != nil {
+		return "", "", "", err
+	}
+	return s.Data["username"].(string),
+		s.Data["password"].(string),
+		strconv.Itoa(s.LeaseDuration),
+		nil
 }

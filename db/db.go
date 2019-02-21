@@ -11,8 +11,9 @@ import (
 )
 
 type Database interface {
-	Init() error
+	Init(dbuser, dbpassword string) error
 	GetUsers() ([]user.User, error)
+	PostUser(newUser user.User) (user.User, error)
 }
 
 var (
@@ -27,7 +28,7 @@ func init() {
 	flag.StringVar(&database, "user_database", os.Getenv("user_database"), "Database to use for User Service")
 }
 
-func Init() error {
+func Init(dbuser, dbpassword string) error {
 	if database == "" {
 		return ErrNoDatabaseSelected
 	}
@@ -35,7 +36,7 @@ func Init() error {
 	if err != nil {
 		return err
 	}
-	return DefaultDB.Init()
+	return DefaultDB.Init(dbuser, dbpassword)
 }
 
 func Register(name string, db Database) {

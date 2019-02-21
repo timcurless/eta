@@ -13,11 +13,12 @@ var (
 )
 
 type User struct {
+	ID        string `json:"" gorm:"primary_key"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-	RewardsID string `json:"rewards_id"`
+	RewardsID string `json:"rewards_id" gorm:"index"`
 	Email     string `json:"email"`
-	Password  string `json:"password"`
+	Password  string `json:"-"`
 	Salt      string `json:"-"`
 }
 
