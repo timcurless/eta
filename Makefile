@@ -19,8 +19,10 @@ check: fmt build test
 build:
 	CGO_ENABLED=$(CGO_ENABLED) $(GO) build -ldflags $(BUILDFLAGS) -o bin/$(NAME) $(MAIN_GO)
 
-docker:
+docker: build
 	docker build -t timcurless/eta ./
+	docker push timcurless/eta
+	rm -f bin/$(NAME)
 
 test:
 	CGO_ENABLED=$(CGO_ENABLED) $(GO) test $(PACKAGE_DIRS) -test.v -covermode=count -coverprofile=coverage.out -json > report.json

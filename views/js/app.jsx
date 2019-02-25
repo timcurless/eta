@@ -48,7 +48,7 @@ class Home extends React.Component {
     return (
       <div className="container">
         <div className="jumbotron text-center">
-          <h1>Welcome to Eta!</h1>
+          <h1>{'Welcome to \u03B7!'}</h1>
           <hr />
           <div className="container text-left">
             <div className="row">

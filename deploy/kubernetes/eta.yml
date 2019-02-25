@@ -1,0 +1,117 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: eta-users-db
+spec:
+  selector:
+    matchLabels:
+      type: db
+      service: eta
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        type: db
+        service: eta
+    spec:
+      containers:
+      - name: db
+        image: postgres:11.2-alpine
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: eta-users-db
+spec:
+  ports:
+  - port: 5432
+  selector:
+    type: db
+    service: eta
+
+---
+
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: eta
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: api
+      service: eta
+  template:
+    metadata:
+      labels:
+        type: api
+        service: eta
+    spec:
+      containers:
+      - name: eta
+        image: timcurless/eta
+        env:
+        - name: DB_HOST
+          value: eta-users-db
+        - name: DB_PORT
+          value: "5432"
+        - name: USER_DATABASE
+          value: "postgres"
+        - name: VAULT_URL
+          value: "http://vault:8200"
+        - name: VAULT_TOKEN
+          value: "s.INuE4XzuvUdmQW6WiDPwuB3P"
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: vault
+  labels:
+    app: vault
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: vault
+    spec:
+      containers:
+      - name: vault
+        command: ["vault", "server", "-dev"]
+        image: "vault:1.0.3"
+        imagePullPolicy: IfNotPresent
+        securityContext:
+            capabilities:
+              add:
+                - IPC_LOCK
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+  labels:
+    app: vault
+spec:
+  ports:
+    - port: 8200
+      targetPort: 8200
+      protocol: TCP
+      name: vault
+  selector:
+    app: vault
